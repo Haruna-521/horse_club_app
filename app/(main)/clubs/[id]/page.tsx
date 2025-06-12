@@ -11,34 +11,20 @@ export default async function ClubDetailPage({
 }: {
   params: { id: string }
 }) {
-  const supabase = createClient()
-
-  // 実際の実装ではSupabaseからデータを取得
-  // const { data: club, error } = await supabase
-  //   .from('clubs')
-  //   .select('*')
-  //   .eq('id', params.id)
-  //   .single()
-
-  // if (error || !club) {
-  //   notFound()
-  // }
-
-  // ダミーデータ
-  const club = {
-    id: 1,
-    name: "東京乗馬クラブ",
-    location: "東京都世田谷区",
-    description:
-      "都心から近い、初心者から上級者まで楽しめる乗馬クラブです。広々とした馬場と経験豊富なインストラクターが、あなたの乗馬ライフをサポートします。初心者向けのレッスンから、競技志向の方向けの高度なトレーニングまで幅広く対応しています。",
-    difficulty: "初級〜中級",
-    image_url: "/placeholder.svg?height=400&width=800",
-    facilities: ["屋内馬場", "屋外馬場", "クラブハウス", "シャワールーム"],
-    staff: [
-      { name: "鈴木 一郎", role: "チーフインストラクター" },
-      { name: "田中 花子", role: "インストラクター" },
-      { name: "佐藤 健", role: "スタッフ" },
-    ],
+  let club = null
+  let staff = []
+    try {
+    const supabase = await createClient()
+    const { data:clubData, error:clubError } = await supabase.from("clubs").select("*").eq('id', params.id).single()
+    const { data:staffData, error:staffError } = await supabase.from("staff").select("*").eq('club_id', params.id)
+    if (clubError || staffError) {
+      console.error("データ取得エラー", clubError || staffError)
+    } else {
+      club = clubData
+      staff = staffData || []
+    }
+  } catch (error) {
+    console.error("Supabase connection error:", error)
   }
 
   return (
@@ -82,7 +68,7 @@ export default async function ClubDetailPage({
                 <h2 className="text-xl font-semibold">施設情報</h2>
                 <Separator className="my-2" />
                 <ul className="grid grid-cols-2 gap-2">
-                  {club.facilities.map((facility, index) => (
+                  {(club.facilities?.split('、')?? []).map((facility: string, index:number) => (
                     <li key={index} className="flex items-center">
                       <span className="mr-2 h-2 w-2 rounded-full bg-primary" />
                       {facility}
@@ -95,11 +81,11 @@ export default async function ClubDetailPage({
                 <h2 className="text-xl font-semibold">スタッフ紹介</h2>
                 <Separator className="my-2" />
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {club.staff.map((staff, index) => (
+                  {staff.map((member:any, index:number) => (
                     <Card key={index} className="rounded-xl shadow-md">
                       <CardHeader className="pb-2">
-                        <CardTitle className="text-base">{staff.name}</CardTitle>
-                        <CardDescription>{staff.role}</CardDescription>
+                        <CardTitle className="text-base">{member.name}</CardTitle>
+                        <CardDescription>{member.role}</CardDescription>
                       </CardHeader>
                     </Card>
                   ))}
