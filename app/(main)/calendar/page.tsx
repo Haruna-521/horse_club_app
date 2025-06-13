@@ -108,11 +108,12 @@ export default function CalendarPage() {
     }
   }
 
-  //これ何？ const filteredSchedules = schedules.filter(
-  //   (schedule) =>
-  //     schedule.club_id === selectedClub &&
-  //     schedule.date === format(selectedDate || new Date(), "yyyy-MM-dd")
-  // )
+  const filteredSchedules = schedules.filter(
+    (schedule) =>
+      schedule.club_id === selectedClub &&
+      schedule.date === format(selectedDate || new Date(), "yyyy-MM-dd")
+  )
+  //このfilteredSchedulesは今選ばれているクラブと日付に一致するスケジュールを抽出はできている。が書かれている場所は重要。Reactの関数コンポーネントのなかで書かれないと更新されても実行されない。
 
   return (
     <div className="container py-10">
