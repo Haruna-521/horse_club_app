@@ -12,30 +12,36 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { date } from "zod"
 
 export default function CalendarPage() {
-  //CalendarPageという名前のコンポーネント（画面の部品）を作成しexport defaultでほかのファイルから使えるようにしている。
+  
   const searchParams = useSearchParams()
   const initialClubId = searchParams.get("club") || ""
-//URLの？club・・・のようなクエリパラメーターを読み取って、clubパラメーターがない場合は""(空文字)を使用。
+
   const [clubs, setClubs] = useState<any[]>([])
-//クラブデータを取得：プルダウンメニューに表示するクラブ一覧、デフォルトで選択するクラブを決める、ために必要。
-  const [schedules, setSchedules] = useState<any[]>([])//schedulesは変数（現在のスケジュール一覧を保存する箱）でsetSchedulesは関数（その箱の中身を更新する関数）。
-  //schedules = []空の配列。次にsetschedules関数を実行するとsetScheduless([{id:a,titl...}])みたいなデータを入れる。そうすると変数schedulesにその値が入る（更新される）。setSchedulesはした（７０行目あたりから）
+
+  const [schedules, setSchedules] = useState<any[]>([])
+
+
+
   const [selectedClub, setSelectedClub] = useState(initialClubId)
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date())//→<Date | undefined>：TypeScriptの型指定。Dateまたはundefinedのどちらかの値を持つよってこと。new Date():現在の日時を作るJavaScriptの命令、初期値として設定。undefinedは日時を削除したり日付未選択状態の可能性のため入れてる。
-//useState：コンポーネント内でデータを保存・更新するためのReactの機能。[現在の値,値を更新する関数]。clubs:全クラブのリストを保存、schedules:スケジュールのリストを保存、selectedClub:現在選択されているクラブID、selectedData：現在選択されている日付。
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date())
+
+
+
   useEffect(() => {
-//useEffect：コンポーネントが画面に表示されたときに自動実行される処理で主にデータの取得や初期設定で使用される。
+
     const fetchData = async () => {
       const { data: clubData, error: clubError } = await supabase.from("clubs").select("*").order("name")
-//supabaseのclubsテーブルにアクセス。.select("*")：すべての列（フィールド）を取得、.order("name"):nameフィールドでアルファベット順に並び替え、await:データベースからの応答を待つ。=クラブデータを全件取得。
+
+
       if (clubError) {
         console.error("クラブの取得エラー:", clubError)
         return
       }
-//データ取得に失敗した場合、エラーをコンソールに表示して処理を終了する。
-//よって以上のコードはカレンダーページで「特定のクラブのスケジュールを表示する」機能の基礎部分。
+
+      
 
       setClubs(clubData || [])
 //取得したクラブデータをclubs状態に保存。||はまたはという意味。clubDataがnullやundefinedの間合いは空配列[]を使用。
@@ -46,73 +52,67 @@ export default function CalendarPage() {
 // clubData = null
 // setClubs([]) // → clubsに空配列が設定される（エラー防止）
       const clubId = initialClubId || clubData?.[0]?.id
-      if (!clubId) return
+      if (!clubId) {
 //initialClubIdは前に定義した「initialClubId = searchParams.get("club") || ""」のやつ。URLで指定されていればそれを使用、なければ最初のクラブを自動選択する。
 //if~はclubIdが存在しない(null,undefined,"")場合、処理を停止しこれ以降の処理を実行しない。＝初期クラブ決定。
 
       setSelectedClub(clubId)
-//選択したclubIdをselectedClubに状態を保存している。プルダウンで選択された状態を表示するため。ここまでのclubIdに関する処理は「ページを開いたときに適切なクラブを自動選択して、そのスケジュールを表示する」ロジック。
-
-      const formattedDate = (selectedDate || new Date()).toISOString().split('T')[0]
-      const { data: scheduleData, error: scheduleError } = await supabase
-        .from("schedules")//schedulesデーブルを対象とする。
-        .select("*")//すべての列を取得。
-        .eq("club_id", clubId)//クラブＩＤが一致するレコードのみ。(カラム名,比較する値)という書き方。クラブで絞り込み。
-        .eq("date", formattedDate)//日付で絞り込み。
-        .order("start_time", { ascending: true })//開始時間順に並び替え。
-
-      if (scheduleError) {
-        console.error("スケジュールの取得エラー:", scheduleError)
-        return
-      }
-//スケジュール取得に失敗した場合、エラーを表示して処理を終了する。
-
-      setSchedules(scheduleData || [])
-      //この()部分がschedulesに保存される。↑で絞り込みをしているので絞り込み済みのスケジュール配列が入る。
     }
-//取得したスケジュールデータを状態に保存する。データがない場合は空配列を設定。
-    fetchData()
-  }, [])//初回のみ実行する。
+  }
+  fetchData()
+},[])
 
-  //選択変更時の処理
-  const handleClubChange = async (newClubId: string) => {
+      
+  const fetchSchedules = async (clubId: string, date:Date | undefined) => {
+      if (!selectedClub || !selectedDate) return
+
+        const formattedDate = format( selectedDate,"yyyy-MM-dd")
+      
+        const { data: scheduleData, error: scheduleError } = await supabase
+        .from("schedules")
+        .select(`
+          id,lesson_name,start_time,end_time,available_slots,level,
+          staff:stahh_id(
+            name)
+        `)
+        .eq("club_id", selectedClub)
+        .eq("date", formattedDate)
+        .order("start_time", { ascending: true })
+
+        if (scheduleError) {
+          console.error("スケジュールの取得エラー:", scheduleError)
+        }else {
+          setSchedules(scheduleData || [])
+          console.log(scheduleData)
+        }
+  
+  }
+      //  !left(
+      //       name
+      //     )
+  const handleClubChange = async (newClubId:string) => {
     setSelectedClub(newClubId)
-
-    //新しいクラブのスケジュールを取得
-    const formattedDate = (selectedDate || new Date()).toISOString().split('T')[0]
-
-    const {data:scheduleData,error} = await supabase
-    .from("schedules")//schedulesデーブルを対象とする。
-        .select("*")//すべての列を取得。
-        .eq("club_id", newClubId)//クラブＩＤが一致するレコードのみ。(カラム名,比較する値)という書き方。クラブで絞り込み。
-        .eq("date", formattedDate)//日付で絞り込み。
-        .order("start_time", { ascending: true })//開始時間順に並び替え。
-    if (!error) {
-        setSchedules(scheduleData || [])
-    }
+    await fetchSchedules(newClubId,selectedDate)
   }
-  const handleDateChange = async (newDate: Date | undefined) => {
+  const handleDateChange = async (newDate:Date | undefined) => {
     setSelectedDate(newDate)
-
-    if (!newDate || !selectedClub) return
-    //新しい日付のスケジュールを取得
-    const formattedDate = newDate?.toISOString().split('T')[0]
-    const { data: scheduleData,error} = await supabase
-      .from("schedules")
-      .select("*")
-      .eq("club_id",selectedClub)
-      .eq("date",formattedDate)
-      .order("start_time", { ascending: true})
-    if (!error) {
-      setSchedules(scheduleData || [])
+    if (selectedClub){
+      await fetchSchedules(selectedClub,newDate)
     }
   }
 
-  const filteredSchedules = schedules.filter(
-    (schedule) =>
-      schedule.club_id === selectedClub &&
-      schedule.date === format(selectedDate || new Date(), "yyyy-MM-dd")
-  )
+  // //useEffect入れてみる。
+  // const useEffect(() => {
+  //   //第一引数には実行したい副作用関数を記述
+  //   const 
+  //   }
+  // },[依存する変数の配列])//第二引数には副作用関数の実行タイミングを制御する依存データを記述。
+  // const filteredSchedules = schedules.filter(
+  //   (schedule) =>
+  //     schedule.club_id === selectedClub &&
+  //     schedule.date === format(selectedDate || new Date(), "yyyy-MM-dd")
+  // )
+  //.filter()は「配列の中から条件にあうものだけを取り出す」メソッド。ここでは「選ばれたクラブIDと選ばれた日付に一致するスケジュールだけを抽出。supabaseのクエリパラメータでもフィルタしてるが念押し的にフィルタするケースが多い。
   //このfilteredSchedulesは今選ばれているクラブと日付に一致するスケジュールを抽出はできている。が書かれている場所は重要。Reactの関数コンポーネントのなかで書かれないと更新されても実行されない。
 
   return (
@@ -136,7 +136,7 @@ export default function CalendarPage() {
               <div className="p-6 pt-0 space-y-4">
                 <div>
                   <label className="text-sm font-medium">クラブを選択</label>
-                  <Select value={selectedClub} onValueChange={setSelectedClub}>
+                  <Select value={selectedClub} onValueChange={handleClubChange}>
                     <SelectTrigger className="w-full rounded-xl">
                       <SelectValue placeholder="クラブを選択" />
                     </SelectTrigger>
@@ -168,7 +168,7 @@ export default function CalendarPage() {
                         <Calendar
                           mode="single"
                           selected={selectedDate}
-                          onSelect={setSelectedDate}
+                          onSelect={handleDateChange}
                           initialFocus
                           disabled={(date) => date < new Date()}
                           className="rounded-xl"
@@ -177,10 +177,10 @@ export default function CalendarPage() {
                     </Popover>
 
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm" className="w-full rounded-xl" onClick={() => setSelectedDate(new Date())}>
+                      <Button variant="outline" size="sm" className="w-full rounded-xl" onClick={() => handleDateChange(new Date())}>
                         今日
                       </Button>
-                      <Button variant="outline" size="sm" className="w-full rounded-xl" onClick={() => setSelectedDate(addDays(new Date(), 1))}>
+                      <Button variant="outline" size="sm" className="w-full rounded-xl" onClick={() => handleDateChange(addDays(new Date(), 1))}>
                         明日
                       </Button>
                     </div>
@@ -189,34 +189,34 @@ export default function CalendarPage() {
               </div>
             </Card>
           </div>
-
+ 
           {/* 右カラム */}
           <div className="md:col-span-2">
             <h2 className="mb-4 text-xl font-semibold">
               {selectedDate ? format(selectedDate, "yyyy年MM月dd日 (eee)", { locale: ja }) : "日付を選択してください"} のスケジュール
             </h2>
 
-            {filteredSchedules.length > 0 ? (
+            {schedules.length > 0 ? (
               <div className="grid gap-4">
-                {filteredSchedules.map((schedule) => (
+                {schedules.map((schedule) => (
                   <Card key={schedule.id} className="rounded-xl shadow-md">
                     <CardHeader className="pb-2">
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-lg">
-                          {schedule.startTime} - {schedule.endTime}
+                          {schedule.start_time} - {schedule.end_time}
                         </CardTitle>
-                        <Badge variant={schedule.availableSpots > 0 ? "outline" : "destructive"}>
-                          {schedule.availableSpots > 0 ? `残り${schedule.availableSpots}枠` : "満員"}
+                        <Badge variant={schedule.available_slots > 0 ? "outline" : "destructive"}>
+                          {schedule.available_slots > 0 ? `残り${schedule.available_slots}枠` : "満員"}
                         </Badge>
                       </div>
                       <CardDescription>
-                        インストラクター: {schedule.instructor} | レベル: {schedule.level}
+                        インストラクター: {schedule.staff?.name ||"取得失敗"} | レベル: {schedule.level}
                       </CardDescription>
                     </CardHeader>
                     <CardFooter className="p-6">
-                      <Button className="w-full rounded-xl" disabled={schedule.availableSpots === 0} asChild>
+                      <Button className="w-full rounded-xl" disabled={schedule.available_slots === 0} asChild>
                         <a href={`/reservation/${schedule.id}`}>
-                          {schedule.availableSpots > 0 ? "予約する" : "予約できません"}
+                          {schedule.available_slots > 0 ? "予約する" : "予約できません"}
                         </a>
                       </Button>
                     </CardFooter>
