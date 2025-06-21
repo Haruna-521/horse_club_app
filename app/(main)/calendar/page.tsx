@@ -72,7 +72,7 @@ export default function CalendarPage() {
         .from("schedules")
         .select(`
           id,lesson_name,start_time,end_time,available_slots,level,
-          staff:stahh_id(
+          staff:staff_id!left
             name)
         `)
         .eq("club_id", selectedClub)

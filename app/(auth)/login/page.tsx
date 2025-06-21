@@ -3,18 +3,18 @@ import { LoginForm } from "./login-form"
 
 export default async function LoginPage() {
   // 認証チェックは一旦コメントアウト（後で有効化）
-  // try {
-  //   const supabase = await createClient()
-  //   const {
-  //     data: { session },
-  //   } = await supabase.auth.getSession()
+  try {
+    const supabase = await createClient()
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
 
-  //   if (session) {
-  //     redirect("/mypage")
-  //   }
-  // } catch (error) {
-  //   console.error("Supabase client error:", error)
-  // }
+    if (session) {
+      redirect("/")
+    }
+  } catch (error) {
+    console.error("Supabase client error:", error)
+  }
 
   return (
     <div className="container relative flex min-h-screen flex-col items-center justify-center md:grid lg:max-w-none lg:grid-cols-2 lg:px-0">
