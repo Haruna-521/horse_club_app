@@ -1,55 +1,65 @@
+"use client"
+//このコンポーネントがクライアント側（ブラウザ）で動くことを明示。
 import Link from "next/link"
 import { CalendarDays, ChevronRight, Settings } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
+import { supabase } from "@/lib/supabase/client"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { error } from "console"
 
-export default async function MyPage() {
-  // 一旦ダミーデータを使用
-  const session = { user: { email: "test@example.com" } }
-  const profile = { full_name: "テストユーザー" }
+export default function MyPage() {
 
-  // 予約情報を取得（ダミーデータ）
-  const reservations = [
-    {
-      id: "1",
-      clubName: "東京乗馬クラブ",
-      date: "2024-06-05",
-      startTime: "10:00",
-      endTime: "11:00",
-      instructor: "鈴木 一郎",
-      status: "confirmed", // confirmed, cancelled
-    },
-    {
-      id: "2",
-      clubName: "横浜ホースパーク",
-      date: "2024-06-10",
-      startTime: "13:00",
-      endTime: "14:00",
-      instructor: "山田 太郎",
-      status: "confirmed",
-    },
-    {
-      id: "3",
-      clubName: "東京乗馬クラブ",
-      date: "2024-05-20",
-      startTime: "15:00",
-      endTime: "16:00",
-      instructor: "田中 花子",
-      status: "cancelled",
-    },
-  ]
+  const [session,setSession] = useState<any>(null)
+//nullつまり最初は情報がない状態にしている。setSession()で後からセッション情報を保存する。
+  const [profile,setProfile] = useState<any>(null)
+  //ユーザーのプロフィール（名前など）を保存するために関数。
+  useEffect(() => {
+    //Reactの仕組み。このページが表示されたら○○を処理する、というやつ。
+    const fetchUserData = async () => {
+      //async:非同期処理（時間のかかる処理ですよ）というやつ。
+      const {data:sessionData,error:sessionError} = await supabase.auth.getSession()
+      const session =sessionData?.session
+//data:sessionにユーザーがログインしているならそのセッションが入る。errorは失敗した場合エラーが入る。
+      if (sessionError || !session || !session.user) {
+        console.error("セッションの取得に失敗、またはユーザー情報がありません",sessionError)
+        return
+      }//セッション取得に失敗したらエラーを表示して処理を止める。
+
+      setSession(session)//取得したセッションをstateに保存した。
+
+      const { data:profileData, error:profileError } = await supabase//ここのdataはオブジェクト
+      .from("profiles")
+      .select("*")
+      .eq("id",session.user.id)
+      .single()
+
+      if (profileError) {
+        console.error("プロフィール取得エラー:",error)
+        return
+      }
+      setProfile(profileData)//取得できたプロフィール情報をstateに保存。
+      }
+
+      fetchUserData()
+    },[])
 
   // 直近の予約
   const upcomingReservations = reservations
     .filter((r) => r.status === "confirmed" && new Date(r.date) >= new Date())
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+//.filter()は配列の中から「条件に合うものだけを残す」ための処理。(r)は配列の中から１つ１つの予約（１件分）。
+//r.status === "confirmed":予約の状態が「確定済み（confirmed)」ということ。。new Date(r.date) >= new Date():予約日が「今日以降」。
+//.sort()は配列の順番を並び替える処理。
 
   // 過去の予約
   const pastReservations = reservations
     .filter((r) => new Date(r.date) < new Date() || r.status === "cancelled")
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+//new Date(r.date) < new Date():予約日が「今日より前」か、r.status === "cancelled":予約が「キャンセル」されたか。
 
   const fullName = profile?.full_name || session?.user.email?.split("@")[0] || "ユーザー"
   const initials = fullName
