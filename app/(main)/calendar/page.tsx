@@ -65,14 +65,14 @@ export default function CalendarPage() {
       
   const fetchSchedules = async (clubId: string, date:Date | undefined) => {
       if (!selectedClub || !selectedDate) return
-
+        console.log(selectedDate)
         const formattedDate = format( selectedDate,"yyyy-MM-dd")
       
         const { data: scheduleData, error: scheduleError } = await supabase
         .from("schedules")
         .select(`
           id,lesson_name,start_time,end_time,available_slots,level,
-          staff:staff_id!left
+          staff:staff_id!left(
             name)
         `)
         .eq("club_id", selectedClub)
@@ -95,7 +95,11 @@ export default function CalendarPage() {
     await fetchSchedules(newClubId,selectedDate)
   }
   const handleDateChange = async (newDate:Date | undefined) => {
+
+    console.log("変更前",selectedDate)
     setSelectedDate(newDate)
+
+    console.log("変更後",selectedDate)
     if (selectedClub){
       await fetchSchedules(selectedClub,newDate)
     }

@@ -17,6 +17,7 @@ export default function MyPage() {
 //nullつまり最初は情報がない状態にしている。setSession()で後からセッション情報を保存する。
   const [profile,setProfile] = useState<any>(null)
   //ユーザーのプロフィール（名前など）を保存するために関数。
+  const [lessonData,setLessonData] = useState<any[]>([])
   useEffect(() => {
     //Reactの仕組み。このページが表示されたら○○を処理する、というやつ。
     const fetchUserData = async () => {
@@ -31,43 +32,114 @@ export default function MyPage() {
 
       setSession(session)//取得したセッションをstateに保存した。
 
-      const { data:profileData, error:profileError } = await supabase//ここのdataはオブジェクト
-      .from("profiles")
-      .select("*")
-      .eq("id",session.user.id)
-      .single()
+      // const { data:profileData, error:profileError } = await supabase//ここのdataはオブジェクト
+      // .from("profiles")
+      // .select("*")
+      // .eq("id",session.user.id)
+      // .single()
 
-      if (profileError) {
-        console.error("プロフィール取得エラー:",error)
-        return
-      }
-      setProfile(profileData)//取得できたプロフィール情報をstateに保存。
-      }
+      // if (profileError) {
+      //   console.error("プロフィール取得エラー:",profileError)
+      //   return
+      // }
+      // setProfile(profileData)//取得できたプロフィール情報をstateに保存。
+      
+
+    //   fetchUserData()
+    // },[])
+
+
+    const {data:lessonData,error:lessonError} = await supabase
+    .from("reservations")
+    .select(`
+      id,
+      schedule_id,
+      status,
+      schedules(
+        lesson_name,
+        date,
+        start_time,
+        end_time,
+        club_id
+      )
+    `)
+      //↑で渡されるデータはこんな感じのイメージ。id:予約id,schedule_id:スケジュールのID,status:confirmed or cancelled,schedules:{lesson_name:レッスン名,data:2025-06-30,start_time.....""略}
+    .eq("user_id",session.user.id)
+    
+    if (lessonError) {
+      console.error("レッスン取得エラー:",lessonError)
+      return
+    }
+    console.log("取得できた予約情報：",lessonData)
+    setLessonData(lessonData || [])
+          
+  }
 
       fetchUserData()
     },[])
 
-  // 直近の予約
-  const upcomingReservations = reservations
-    .filter((r) => r.status === "confirmed" && new Date(r.date) >= new Date())
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-//.filter()は配列の中から「条件に合うものだけを残す」ための処理。(r)は配列の中から１つ１つの予約（１件分）。
-//r.status === "confirmed":予約の状態が「確定済み（confirmed)」ということ。。new Date(r.date) >= new Date():予約日が「今日以降」。
-//.sort()は配列の順番を並び替える処理。
+    const upcomingReservations = lessonData//lessonDataはsupabaseから取得した予約データの配列。このlessonDataから今後の予約だけを抜き出してupcomingReservationsに代入する。
+      .filter((r) => {//filter()は配列から条件に合うものだけを取り出す関数。rは配列の１つ１つの要素（予約１件）を表している。
+      const today =new Date()//今日の日付・時間を取得している。
+      const lessonDate = new Date(r.schedules.date)//各予約のスケジュールの日付をDateオブジェクトに変換してる（文字列のままだと比較できないため）
+      return r.status === "confirmed" &&lessonDate >= today//予約がconfirmed（=確定)で日付が「今日以降（未来）である」
+      })
+      .sort((a,b) => {//フィルターで残った予約を日付の昇順にする。aとbは配列内の２つの予約を比較するための仮の変数。
+        const aDate = new Date(a.schedules.date).getTime()
+        const bDate = new Date(b.schedules.date).getTime()//getTime()によって日付を数値（ミリ秒）に変換。大小比較ができるようにしてる。
+        return aDate - bDate
+      })
 
-  // 過去の予約
-  const pastReservations = reservations
-    .filter((r) => new Date(r.date) < new Date() || r.status === "cancelled")
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-//new Date(r.date) < new Date():予約日が「今日より前」か、r.status === "cancelled":予約が「キャンセル」されたか。
+    const pastReservations = lessonData
+     .filter((r)=>{
+      const today = new Date()
+      const lessonData = new Date(r.schedules.date)
+      return r.status === "cancelled" || lessonData <today
+     })
+     .sort((a,b) => {
+      const aDate = new Date(a.schedules.date).getTime()
+      const bDate = new Date(b.schedules.date).getTime()
+      return bDate - aDate
+     })
+//   // 直近の予約
+//   const upcomingReservations = 
+//     .filter((r) => r.status === "confirmed" && new Date(r.date) >= new Date())
+//     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+// //.filter()は配列の中から「条件に合うものだけを残す」ための処理。(r)は配列の中から１つ１つの予約（１件分）。
+// //r.status === "confirmed":予約の状態が「確定済み（confirmed)」ということ。。new Date(r.date) >= new Date():予約日が「今日以降」。
+// //.sort()は配列の順番を並び替える処理。
 
-  const fullName = profile?.full_name || session?.user.email?.split("@")[0] || "ユーザー"
+//   // 過去の予約
+//   const pastReservations = reservations
+//     .filter((r) => new Date(r.date) < new Date() || r.status === "cancelled")
+//     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+// //new Date(r.date) < new Date():予約日が「今日より前」か、r.status === "cancelled":予約が「キャンセル」されたか。
+
+  const fullName = profile?.full_name || session?.user.user_metadata?.full_name || session?.user.email?.split("@")[0] || "ユーザー"
   const initials = fullName
     .split(" ")
-    .map((n) => n[0])
+    .map((n:string) => n[0])
     .join("")
+//94:profile?.full_name→ユーザーのプロフィール情報（名前）があればそれ。||→または。nullやundefinedの場合次の値を使う。session?.user.email?.split("@")[0]→名前がない場合メールアドレスの「＠より前の部分」を使う。||(または)、"ユーザー"→それでも値がなければユーザーという文字列を使用する。
+//95:fullName.split("")→名前を空白（スペース）で分けて配列にする。例"太郎 山田"；["太郎","山田"].map((n)=>n[0])→各単語の最初の１文字を取り出す。例["太郎","山田"];["太","山"].join("")→バラバラになった文字をくっつけて文字列にする。例"太山"
 
-  return (
+//return()→Reactコンポーネントの画面に表示する部分。className=""{Tailwindd Cssというライブラリでcontainerは中央寄せ、py-10は上下の余白。flex flex-colは要素を縦方向に並ぶFlexboxの指定。gap-8要素の間に大きめの隙間（８単位）をあける。text-3×1は大きな文字サイズ。font-boldは太字。tracking-trghtは文字間を狭くする。　p className~サブタイトル的なテキスト。text-muted-foregroundは少し色を薄くして控えめな印象にする。} 
+//card:UIコンポーネント。外枠を表す。rounded-x1は角を大きく丸める。shadow-mdは中程度の立体感のある影をつける。
+//CardHeader:ヘッダー部分。　items-center:縦方向の中央揃え。space-y-4:縦の要素同士に適度なスペースをあける。text-center:テキスト中央揃え。p-6：内側にパディングを６単位。
+//AvatarImage:今は""空白のため表示されない。　AvatatFallback:画像がないときに代わりに表示。initialsで作成した文字列を使用する。text-lg:少し大きめの文字。bg-primary/20:メインカラーの20％薄い背景色。text-primary-dark:メインカラーの濃い文字色。
+//CardFooter:カードの一番下。button:見た目がボタンのようになる。asChilsを指定してLinkを中に入れる（リンク型のボタンにする。Link href=~クリックすると設定ページに遷移。Settings:アイコン
+//md:col-span-2:中サイズ以上の画面で横に２列分使う。rounded-x1:角を丸くする。
+//flex+flex-row:横並びに配置。items-ceter:縦方向に中央揃え。justify-between左右端に要素を配置（スペースを等しく分ける。）
+//CardTitle：タイトル。CardDescription:小見出しや補足説明。
+//button valiant=~ボタン風のリンクを作成。/mypage/reservations???これどこだ？？？？variant="ghost"ボタンに拝啓がないスタイル。ChevronRight:→のような右矢印アイコン。
+//{upcomingReservations.length>0?()}→upcomingReservationsが１件以上あるかの確認。→lessonDataに変更してみた。.map()は配列の各要素を1つずつ表示する、Reactの基本構文。
+//div key=~→１件の予約カード。keyはReactがリストを管理するために必要な識別子（予約ＩＤ）。
+//div className="flex items-center text-sm text-muted-foreground" CalendarDays className=~→カレンダーアイコンと日付、時間を表示。
+//p className= "text-sm text-muted-foreground"インストラクター:~→担当インストラクターの名前を表示。
+//badge variant="outline"~→小さなラベル（バッジ）で「予約済み」と表示。
+//直近の予約はありませんと部分：予約がないときの「何もありません」という表示。
+//cardFooterカードの下部。ボタンクリックで/calendarに移動（予約ページ）
+return(
     <div className="container py-10">
       <div className="flex flex-col gap-8">
         <div>
@@ -114,9 +186,9 @@ export default function MyPage() {
               </Button>
             </CardHeader>
             <CardContent className="p-6">
-              {upcomingReservations.length > 0 ? (
+              {lessonData.length > 0 ? (
                 <div className="space-y-4">
-                  {upcomingReservations.slice(0, 3).map((reservation) => (
+                  {lessonData.slice(0, 3).map((reservation) => (
                     <div key={reservation.id} className="flex items-center justify-between rounded-xl border p-4">
                       <div className="space-y-1">
                         <h4 className="font-medium">{reservation.clubName}</h4>
@@ -160,7 +232,7 @@ export default function MyPage() {
                       <h4 className="font-medium">{reservation.clubName}</h4>
                       <div className="flex items-center text-sm text-muted-foreground">
                         <CalendarDays className="mr-1 h-4 w-4" />
-                        {reservation.date} {reservation.startTime}-{reservation.endTime}
+                        {reservation.date} {reservation.start_time}-{reservation.end_time}
                       </div>
                       <p className="text-sm text-muted-foreground">インストラクター: {reservation.instructor}</p>
                     </div>
@@ -186,3 +258,12 @@ export default function MyPage() {
     </div>
   )
 }
+//pastReservationsの件数が１件以上あるか。pastReservationsとは....???
+//?（三項演算子）で条件分岐。予約履歴を表示、なければ「履歴はありません」と表示。
+//.slice(0,5):予約履歴の中から最大５件を取り出す。.map():１件ずつ表示するために繰り返す。reservationは今表示しようとしている１件分のデータ。
+//key:Reactがリストを扱うために必要な一意の識別子（予約ＩＤ）
+//reservation.clubName:予約したクラブの名前を表示。
+//calendarDays：カレンダーのアイコン。
+//{reservation.date}{reservation.start_time}--{reservation.end_time}:日付＋開始時間～終了時刻の表示。
+//Badge:小さなラベルのようなもの。variant=...→ステータスに応じて見た目を変える。cancelledなら「赤っぽい警告表示（destructive)」それ以外（完了）は「グレー系(secondary)」
+//reservation.status==="cancelled" ? "キャンセル済み":"完了"→ラベルの文字。statusがcancelledならキャンセル済み、それ以外は完了。
