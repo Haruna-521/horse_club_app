@@ -15,35 +15,52 @@ import { Badge } from "@/components/ui/badge"
 import { date } from "zod"
 
 export default function CalendarPage() {
-  
+
   const searchParams = useSearchParams()
   const initialClubId = searchParams.get("club") || ""
-
   const [clubs, setClubs] = useState<any[]>([])
-
   const [schedules, setSchedules] = useState<any[]>([])
-
-
-
   const [selectedClub, setSelectedClub] = useState(initialClubId)
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date())
-
-
-
   useEffect(() => {
-
     const fetchData = async () => {
       const { data: clubData, error: clubError } = await supabase.from("clubs").select("*").order("name")
-
-
       if (clubError) {
         console.error("クラブの取得エラー:", clubError)
         return
       }
-
-      
-
       setClubs(clubData || [])
+
+      const clubId = initialClubId || clubData?.[0]?.id
+      if (!clubId) return
+
+      // setSelectedClub(clubId)
+
+      // スケジュール取得処理↓
+      // const { data: scheduleData, error: scheduleError } = await supabase
+      //   .from("schedules")
+      //   .select("*")
+      //   .eq("club_id", clubId)
+      //   .order("date", { ascending: true })
+
+      // if (scheduleError) {
+      //   console.error("スケジュールの取得エラー:", scheduleError)
+      //   return
+      // }
+
+      // setSchedules(scheduleData || [])
+    }
+
+    fetchData()
+  }, [])
+
+  // const filteredSchedules = schedules.filter(
+  //   (schedule) =>
+  //     schedule.club_id === selectedClub &&
+  //     schedule.date === format(selectedDate || new Date(), "yyyy-MM-dd")
+  // )
+
+
 //取得したクラブデータをclubs状態に保存。||はまたはという意味。clubDataがnullやundefinedの間合いは空配列[]を使用。
 //// clubDataが正常に取得できた場合
 // clubData = [{id: 1, name: "サッカー部"}, {id: 2, name: "野球部"}]
@@ -51,23 +68,18 @@ export default function CalendarPage() {
 //clubDataが取得できなかった場合（null）
 // clubData = null
 // setClubs([]) // → clubsに空配列が設定される（エラー防止）
-      const clubId = initialClubId || clubData?.[0]?.id
-      if (!clubId) {
+      // const clubId = initialClubId || clubData?.[0]?.id
+      // if (!clubId) {
 //initialClubIdは前に定義した「initialClubId = searchParams.get("club") || ""」のやつ。URLで指定されていればそれを使用、なければ最初のクラブを自動選択する。
 //if~はclubIdが存在しない(null,undefined,"")場合、処理を停止しこれ以降の処理を実行しない。＝初期クラブ決定。
-
-      setSelectedClub(clubId)
-    }
-  }
-  fetchData()
-},[])
-
-      
+  //     setSelectedClub(clubId)
+  //   }
+  // }
+  
   const fetchSchedules = async (clubId: string, date:Date | undefined) => {
       if (!selectedClub || !selectedDate) return
         console.log(selectedDate)
         const formattedDate = format( selectedDate,"yyyy-MM-dd")
-      
         const { data: scheduleData, error: scheduleError } = await supabase
         .from("schedules")
         .select(`
@@ -78,33 +90,27 @@ export default function CalendarPage() {
         .eq("club_id", selectedClub)
         .eq("date", formattedDate)
         .order("start_time", { ascending: true })
-
         if (scheduleError) {
           console.error("スケジュールの取得エラー:", scheduleError)
         }else {
           setSchedules(scheduleData || [])
           console.log(scheduleData)
         }
-  
   }
-      //  !left(
-      //       name
-      //     )
+  useEffect(() =>{
+    fetchSchedules(selectedClub,selectedDate)
+  }, [selectedClub,selectedDate])
+  
   const handleClubChange = async (newClubId:string) => {
     setSelectedClub(newClubId)
-    await fetchSchedules(newClubId,selectedDate)
+    // await fetchSchedules(newClubId,selectedDate)
   }
   const handleDateChange = async (newDate:Date | undefined) => {
-
-    console.log("変更前",selectedDate)
     setSelectedDate(newDate)
-
-    console.log("変更後",selectedDate)
-    if (selectedClub){
-      await fetchSchedules(selectedClub,newDate)
-    }
+    // if (selectedClub){
+    //   // await fetchSchedules(selectedClub,newDate)
+    // }
   }
-
   // //useEffect入れてみる。
   // const useEffect(() => {
   //   //第一引数には実行したい副作用関数を記述
@@ -218,11 +224,11 @@ export default function CalendarPage() {
                       </CardDescription>
                     </CardHeader>
                     <CardFooter className="p-6">
-                      <Button className="w-full rounded-xl" disabled={schedule.available_slots === 0} asChild>
+                      {/* <Button className="w-full rounded-xl" disabled={schedule.available_slots === 0} asChild>
                         <a href={`/reservation/${schedule.id}`}>
                           {schedule.available_slots > 0 ? "予約する" : "予約できません"}
                         </a>
-                      </Button>
+                      </Button> */}
                     </CardFooter>
                   </Card>
                 ))}
