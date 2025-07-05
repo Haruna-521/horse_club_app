@@ -2,6 +2,7 @@
 // extendsは基本のルール。そこからはカスタマイズできるルール。これでGitHubにpushやpullリクエストすることで、workflowsファイルがこのルールを読んで自動で実行。
   "extends": ["next/core-web-vitals"],
 
+  
   "rules": {
 
     "no-unused-vars": "warn",            // 未使用変数に気づくことができる
