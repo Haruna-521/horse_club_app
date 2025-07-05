@@ -15,7 +15,7 @@ Any changes you make to your deployed app will be automatically pushed to this r
 Your project is live at:
 
 
-![アプリ画面](画像のURL?raw=true)
+![アプリ画面](https://github.com/Haruna-521/horse_club_app/blob/9076f6a372a0f9327b00f3e4b3ed36eb577bd05c/docs/%E3%82%B9%E3%82%AF%E3%83%AA%E3%83%BC%E3%83%B3%E3%82%B7%E3%83%A7%E3%83%83%E3%83%88%202025-07-05%20224805.png?raw=true)
 
 ## サイトURL
 
