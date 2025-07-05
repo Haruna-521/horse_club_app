@@ -21,35 +21,35 @@ export default async function ClubsPage() {
     console.error("Supabase connection error:", error)
   }
 
-  // データがない場合はダミーデータを使用
-  if (clubs.length === 0) {
-    clubs = [
-      {
-        id: 1,
-        name: "東京乗馬クラブ",
-        location: "東京都世田谷区",
-        description: "都心から近い、初心者から上級者まで楽しめる乗馬クラブです。",
-        difficulty: "初級〜中級",
-        image_url: "/placeholder.svg?height=200&width=400",
-      },
-      {
-        id: 2,
-        name: "横浜ホースパーク",
-        location: "神奈川県横浜市",
-        description: "広大な敷地で自然を感じながら乗馬を楽しめます。",
-        difficulty: "初級〜上級",
-        image_url: "/placeholder.svg?height=200&width=400",
-      },
-      {
-        id: 3,
-        name: "千葉ライディングクラブ",
-        location: "千葉県千葉市",
-        description: "経験豊富なインストラクターが丁寧に指導します。",
-        difficulty: "初級",
-        image_url: "/placeholder.svg?height=200&width=400",
-      },
-    ]
-  }
+  // 以下はダミーデータ。
+  // if (clubs.length === 0) {
+  //   clubs = [
+  //     {
+  //       id: 1,
+  //       name: "東京乗馬クラブ",
+  //       location: "東京都世田谷区",
+  //       description: "都心から近い、初心者から上級者まで楽しめる乗馬クラブです。",
+  //       difficulty: "初級〜中級",
+  //       image_url: "/placeholder.svg?height=200&width=400",
+  //     },
+  //     {
+  //       id: 2,
+  //       name: "横浜ホースパーク",
+  //       location: "神奈川県横浜市",
+  //       description: "広大な敷地で自然を感じながら乗馬を楽しめます。",
+  //       difficulty: "初級〜上級",
+  //       image_url: "/placeholder.svg?height=200&width=400",
+  //     },
+  //     {
+  //       id: 3,
+  //       name: "千葉ライディングクラブ",
+  //       location: "千葉県千葉市",
+  //       description: "経験豊富なインストラクターが丁寧に指導します。",
+  //       difficulty: "初級",
+  //       image_url: "/placeholder.svg?height=200&width=400",
+  //     },
+  //   ]
+  // }
 
   return (
     <div className="container py-10">

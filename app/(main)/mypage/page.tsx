@@ -32,23 +32,7 @@ export default function MyPage() {
 
       setSession(session)//取得したセッションをstateに保存した。
 
-      // const { data:profileData, error:profileError } = await supabase//ここのdataはオブジェクト
-      // .from("profiles")
-      // .select("*")
-      // .eq("id",session.user.id)
-      // .single()
-
-      // if (profileError) {
-      //   console.error("プロフィール取得エラー:",profileError)
-      //   return
-      // }
-      // setProfile(profileData)//取得できたプロフィール情報をstateに保存。
-      
-
-    //   fetchUserData()
-    // },[])
-
-
+      //情報の取得↓
     const {data:lessonData,error:lessonError} = await supabase
     .from("reservations")
     .select(`

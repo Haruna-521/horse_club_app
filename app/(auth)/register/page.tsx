@@ -3,7 +3,7 @@ import { RegisterForm } from "./register-form"
 import { supabase } from "@/lib/supabase/client"
 import { redirect } from "next/navigation"
 export default async function RegisterPage() {
-  // 認証チェックは一旦コメントアウト（後で有効化）
+  
   try {
     const {
       data: { session },
