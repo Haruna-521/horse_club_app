@@ -14,13 +14,14 @@ Any changes you make to your deployed app will be automatically pushed to this r
 
 Your project is live at:
 
-**[https://vercel.com/haruna-521s-projects/v0-horse-club-app](https://vercel.com/haruna-521s-projects/v0-horse-club-app)**
 
-## Build your app
+![アプリ画面](画像のURL?raw=true)
+
+## サイトURL
 
 Continue building your app on:
 
-**[https://v0.dev/chat/projects/FrfFTPxbnvm](https://v0.dev/chat/projects/FrfFTPxbnvm)**
+https://horse-club-app-a2tk.vercel.app/
 
 ## How It Works
 
