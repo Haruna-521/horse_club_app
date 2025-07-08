@@ -33,11 +33,17 @@ https://horse-club-app-a2tk.vercel.app/
 CI/CD:GitHub Actions(ESLint)
 
 ・設計ドキュメント
-https://docs.google.com/spreadsheets/d/1xhpYufzAmk4GAWnDpNsyLwNMYybxnaZEyHLhjbOCP4w/edit?gid=983827669#gid=983827669
+[要件定義・設計・詳細設計の一覧_Googleスプレッドシート](https://docs.google.com/spreadsheets/d/1xhpYufzAmk4GAWnDpNsyLwNMYybxnaZEyHLhjbOCP4w/edit?gid=983827669#gid=983827669)
 ※ワイヤーフレーム、ER図の画像はdocsディレクトリに格納しています。
 
+・テスト、修正の設計及び実施書
+　[テスト・修正の設計及び実施書_Googleスプレッドシート](https://docs.google.com/spreadsheets/d/1DA0Ja0OcTn7OGwIzngvoNbEm9KAr9kGolVq52xARJJc/edit?gid=0#gid=0)
+
+ ・アプリの改善案
+ 　[アプリの改善案_Googleスプレッドシート](https://docs.google.com/spreadsheets/d/1VDlBPa0mL19DWNF-4TbpXyrRA72fdvUZO3ofa2f7WNU/edit?gid=0#gid=0)
+  
 ・備考
-ESLint実行結果：
+ESLint実行結果：https://github.com/Haruna-521/horse_club_app/actions/runs/16090499784/job/45406830755
 活用したAIとその用途
 　ChatGPT:要件定義、設計、コードの理解
   V0:アプリのモック作成
