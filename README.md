@@ -4,7 +4,7 @@
 
 ・概要
 乗馬クラブからレッスンや体験を選んで予約をできるまとめサイトです。マイページでの予約履歴の確認や乗馬クラブのレッスン情報を検索できます。デモ用のアカウントを用意しています。
-　　テストアカウント
+　　テストアカウントはこちらをお使いください。
   メールアドレス：
   パスワード：
 
@@ -18,8 +18,30 @@ https://horse-club-app-a2tk.vercel.app/
 
 ・主な機能
 
-1. Create and modify your project using [v0.dev](https://v0.dev)
-2. Deploy your chats from the v0 interface
-3. Changes are automatically pushed to this repository
-4. Vercel deploys the latest version from this repository
+1. ユーザー登録、ログイン機能
+2. クラブ検索機能
+3. カレンダーによるレッスン検索機能
+4. マイページによる過去予約表示機能
+
 ・技術スタック
+フロントエンド：
+バックエンド：
+データベース：supabase
+デプロイ：vercel
+バージョン管理：Git,GitHub
+テスト・デバッグ：DevTools(Chrome)
+CI/CD:GitHub Actions(ESLint)
+
+・設計ドキュメント
+https://docs.google.com/spreadsheets/d/1xhpYufzAmk4GAWnDpNsyLwNMYybxnaZEyHLhjbOCP4w/edit?gid=983827669#gid=983827669
+※ワイヤーフレーム、ER図の画像はdocsディレクトリに格納しています。
+
+・備考
+ESLint実行結果：
+活用したAIとその用途
+　ChatGPT:要件定義、設計、コードの理解
+  V0:アプリのモック作成
+  GitHub Copilot Chat:ローカル環境でのコードの修正相談
+ リファクタリング
+  コメントアウトの整理
+ 　
