@@ -44,6 +44,23 @@ export function RegisterForm() {
   })
 
   async function onSubmit(values: z.infer<typeof formSchema>) {//onSubmitという関数を定義していてasyncなので非同期処理（時間のかかる処理）を行うよという宣言。引数の部分はz.infer（TypeScript）の自動推論で型を自動的にformSchemaを参照して取得してくれる。つまり、value={email:string,password:string,fullname:string}みたいな形で自動的にデータを入れてくれる。
+
+    if (error) {
+  console.error("ログイン失敗:", error)
+
+  toast({
+    title: "ログインに失敗しました",
+    description:
+      error.message === "Invalid login credentials"
+        ? "メールアドレスまたはパスワードが間違っています"
+        : error.message,
+    variant: "destructive",
+  })
+  return
+}
+
+
+
     try {
       setIsLoading(true)
 

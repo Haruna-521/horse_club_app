@@ -90,13 +90,15 @@
 63～68行目：supabaseからとってきてほしい情報の形を宣言してる？＝supabaseに「該当クラブＩＤと日付の予約情報を取得してください」とリクエストしている。
 70～73行目：もしエラーなら？？よくわからない。＝もしsupabaseからデータ取得時にエラーがあればコンソールに出力します。
 74・75行目：fetchSchedules関数の実行。タイミングはselectedClubとselectedDateの変更があったとき。
-77行目：suheduleData（これどこからやってきた→63行目に初出。＝supabaseから取得した予定（scheduleData）あるいは空の配列をschedulesにいれる。
-
+77行目：suheduleData（これどこからやってきた→63行目に初出。＝supabaseから取得した予定（scheduleData）あるいは空の配列をschedulesにいれる。現在これはuseEffect外のため使用されない（見つけてもらえないエラーになる。）
+→～～修正
+72行目　}else {
+73・74行目　setSchedules(scheduleData || [])｝
 
 85行目　const fetchSchedules = async (clubId: string, date:Date | undefined) => {
 86行目　const formattedDate = date?.toISOString().split('T')[0]
 87～92行目　const {data:scheduleData,error} = await supabase　.from("schedules")　.select("*")　.eq("club_id",clubId ) .eq("date", formattedDate) .order("start_time",{ ascending: true })
-93～96行目行目　if (!error) {setSchedules(scheduleData || [])}}
+93～96行目行目　if (!error) {setSchedules(scheduleData || [])}} 
   
 97行目　const handleClubChange = async (newClubId:string) => {
 98行目　setSelectedClub(newClubId)
