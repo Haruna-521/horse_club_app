@@ -1,12 +1,52 @@
+"use client"
 import Link from "next/link"
+import { useEffect, useState } from "react"
 import { MainNav } from "@/components/layout/main-nav"
 import { UserNav } from "@/components/layout/user-nav"
+import { supabase } from "@/lib/supabase/client"
+import { set } from "date-fns"
 
-export async function SiteHeader() {
-  // 一旦ダミーのユーザー情報を使用
-  const user = null
 
-  // try {
+type UserType = {
+  id: string
+  email: string | undefined
+  full_name: string
+  avatar_url: string
+}
+
+
+export function SiteHeader() {
+  const [user, setUser] = useState<UserType | null>(null)
+
+  useEffect(() => {
+    const fetchSession = async () => {
+      const { data, error } = await supabase.auth.getSession()
+      if (error) {
+        console.error("セッション取得エラー:", error)
+        return
+      }
+
+      const session = data.session
+      if (session?.user) {
+        const { data: profileData } = await supabase
+          .from("profiles")
+          .select("full_name, avatar_url")
+          .eq("id", session.user.id)
+          .single()
+        
+        setUser({
+          id: session.user.id,
+          email: session.user.email,
+          full_name: profileData?.full_name || "",
+          avatar_url: profileData?.avatar_url || "",
+        })
+      }
+    }
+
+  fetchSession()
+  }, [])
+
+  // 以下修正前コード。必要に応じて削除・再利用の検討。
   //   const supabase = await createClient()
   //   const {
   //     data: { session },
@@ -23,7 +63,7 @@ export async function SiteHeader() {
   //     }
   //   }
   // } catch (error) {
-  //   console.error("Error loading user session:", error)
+  //   console.error("ユーザーセッションの取得中にエラーが発生しました:", error)
   // }
 
   return (

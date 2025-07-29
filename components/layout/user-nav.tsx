@@ -7,6 +7,7 @@ import { LogOut, Settings, User } from "lucide-react"
 import { supabase } from "@/lib/supabase/client"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
+import { Menu } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,7 +22,7 @@ import { useToast } from "@/components/ui/use-toast"
 type UserNavProps = {
   user: {
     id: string
-    email: string
+    email: string | undefined
     full_name?: string
     avatar_url?: string
   } | null
@@ -71,7 +72,7 @@ export function UserNav({ user }: UserNavProps) {
         .split(" ")
         .map((n) => n[0])
         .join("")
-    : user.email[0].toUpperCase()
+    : user.email?.[0].toUpperCase() ?? "U"
 
   return (
     <DropdownMenu>
@@ -79,7 +80,11 @@ export function UserNav({ user }: UserNavProps) {
         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
           <Avatar className="h-8 w-8">
             <AvatarImage src={user.avatar_url || ""} alt={user.full_name || user.email} />
-            <AvatarFallback>{initials}</AvatarFallback>
+            <AvatarFallback>
+              <div className="flex items-center justify-center gap-1">
+                <Menu className="w-4 h-4" />
+              </div>
+            </AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>

@@ -148,7 +148,7 @@ export default function SettingsPage() {
           bio: data.bio || "",
         })
       }
-//128:supabaseのupdateメソッドはconst {data,error} = await supabase.from('テーブル名').update(...)という形で、dataは成功時のデータ。errorは失敗時のエラー情報。今回の書き方は「成功したデータは使わずにエラーだけが必要だからerrorだけを受け取っている。つまり、成功時のデータを受け取っていない上、それを表示する構造がない。よって修正。
+//128:supabaseのupdateメソッドはconst {data,error} = await supabase.from('テーブル名').update(...)という形で、dataは成功時のデータ。errorは失敗時のエラー情報。今回の書き方は成功したデータは使わずにエラーだけが必要だからerrorだけを受け取っている。つまり、成功時のデータを受け取っていない上、それを表示する構造がない。よって修正。
 //129:purofilesテーブルを 130:更新（update)して。 132:values.fullNameなどはフォームから受け取った値。
 //135:updated_atにnew Date().toISOString()をつかって今の時刻を記録する。
 //137:idに一致するデータ（本人のデータ）だけ）を更新する。
