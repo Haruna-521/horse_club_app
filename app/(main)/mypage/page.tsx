@@ -22,18 +22,23 @@ export default function MyPage() {
     //Reactの仕組み。このページが表示されたら○○を処理する、というやつ。
     const fetchUserData = async () => {
       //async:非同期処理（時間のかかる処理ですよ）というやつ。
-      const {data:sessionData,error:sessionError} = await supabase.auth.getSession()
-      const session =sessionData?.session
-//data:sessionにユーザーがログインしているならそのセッションが入る。errorは失敗した場合エラーが入る。
-      if (sessionError || !session || !session.user) {
-        console.error("セッションの取得に失敗、またはユーザー情報がありません",sessionError)
+      // const {data:sessionData,error:sessionError} = await supabase.auth.getSession()
+            // const session =sessionData?.session
+      //data:sessionにユーザーがログインしているならそのセッションが入る。errorは失敗した場合エラーが入る。
+        //     if (sessionError || !session || !session.user) {
+        // console.error("セッションの取得に失敗、またはユーザー情報がありません",sessionError)
+      const sessionRes = await supabase.auth.getSession()//supabaseからセッション情報を取得する。(ログインしているかチェック)
+      const session = sessionRes.data.session//セッション（ログイン状態）の中身だけ取り出す。
+
+      if (!session) {
+        console.error("セッションがありません。ログインしてください。")
         return
       }//セッション取得に失敗したらエラーを表示して処理を止める。
 
       setSession(session)//取得したセッションをstateに保存した。
 
-      //情報の取得↓
-    const {data:lessonData,error:lessonError} = await supabase
+      //情報の取得↓(schedulesテーブルを内部結合してる)
+    const {data:reservations,error:reservationError} = await supabase
     .from("reservations")
     .select(`
       id,
@@ -44,47 +49,73 @@ export default function MyPage() {
         date,
         start_time,
         end_time,
-        club_id
+        club_id,
+        staff(name)
       )
     `)
       //↑で渡されるデータはこんな感じのイメージ。id:予約id,schedule_id:スケジュールのID,status:confirmed or cancelled,schedules:{lesson_name:レッスン名,data:2025-06-30,start_time.....""略}
     .eq("user_id",session.user.id)
     
-    if (lessonError) {
-      console.error("レッスン取得エラー:",lessonError)
+    if (reservationError) {
+      console.error("予約情報の取得エラー:",reservationError)
       return
     }
-    console.log("取得できた予約情報：",lessonData)
-    setLessonData(lessonData || [])
+
+    console.log("取得できた予約情報：",reservations)
+    setLessonData(reservations || [])
           
   }
 
       fetchUserData()
     },[])
 
+    //表示用データを成形する↓
+    const fullName =
+      profile?.full_name ||
+      session?.user.user_metadata?.full_name ||
+      session?.user.email?.split("@")[0] ||
+      "ユーザー"
+
+    const initials = fullName
+      .split(" ")
+      .map((n: string) => n[0])
+      .join("")
+      //fullName.split("")は名前を空白で分割して配列にする。例"太郎 山田"→["太郎","山田"]。map((n)=>n[0])は各単語の最初の１文字を取り出す。例["太郎","山田"]→["太","山"]。join("")はバラバラになった文字をくっつけて文字列にする。例["太","山"]→"太山"。
+
+      //pastReservationsは過去の予約を抽出した配列。lessonDataから「確定済み（confirmed）」で「今日より前」の予約だけを取り出している。sort()で日付順に並び替え。
+      const pastReservations = lessonData
+      .filter((r) => {
+        const today = new Date()
+        const lessonDate = new Date(r.schedules.date)
+        return (
+        (r.status === "confirmed" || r.status === null) && lessonDate < today)
+      })
+      .sort((a, b) => new Date(b.schedules.date).getTime() - new Date(a.schedules.date).getTime())
+
+
+      //直近の予約↓
     const upcomingReservations = lessonData//lessonDataはsupabaseから取得した予約データの配列。このlessonDataから今後の予約だけを抜き出してupcomingReservationsに代入する。
       .filter((r) => {//filter()は配列から条件に合うものだけを取り出す関数。rは配列の１つ１つの要素（予約１件）を表している。
-      const today =new Date()//今日の日付・時間を取得している。
+      const today = new Date()//今日の日付・時間を取得している。
       const lessonDate = new Date(r.schedules.date)//各予約のスケジュールの日付をDateオブジェクトに変換してる（文字列のままだと比較できないため）
-      return r.status === "confirmed" &&lessonDate >= today//予約がconfirmed（=確定)で日付が「今日以降（未来）である」
+      return (
+        (r.status === "confirmed" || r.status === null) && lessonDate >= today)//予約がconfirmed（=確定)で日付が「今日以降（未来）である」
       })
-      .sort((a,b) => {//フィルターで残った予約を日付の昇順にする。aとbは配列内の２つの予約を比較するための仮の変数。
-        const aDate = new Date(a.schedules.date).getTime()
-        const bDate = new Date(b.schedules.date).getTime()//getTime()によって日付を数値（ミリ秒）に変換。大小比較ができるようにしてる。
-        return aDate - bDate
-      })
+      .sort((a, b) => new Date(b.schedules.date).getTime() - new Date(a.schedules.date).getTime())
 
-    const pastReservations = lessonData
-     .filter((r)=>{
-      const today = new Date()
-      const lessonData = new Date(r.schedules.date)
-      return r.status === "cancelled" || lessonData <today
-     })
-     .sort((a,b) => {
-      const aDate = new Date(a.schedules.date).getTime()
-      const bDate = new Date(b.schedules.date).getTime()
-      return bDate - aDate
-     })
+        return (
+
+    // const pastReservations = lessonData
+    //  .filter((r)=>{
+    //   const today = new Date()
+    //   const lessonData = new Date(r.schedules.date)
+    //   return r.status === "cancelled" || lessonData <today
+    //  })
+    //  .sort((a,b) => {
+    //   const aDate = new Date(a.schedules.date).getTime()
+    //   const bDate = new Date(b.schedules.date).getTime()
+    //   return bDate - aDate
+    //  })
 //   // 直近の予約
 //   const upcomingReservations = 
 //     .filter((r) => r.status === "confirmed" && new Date(r.date) >= new Date())
@@ -99,11 +130,7 @@ export default function MyPage() {
 //     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 // //new Date(r.date) < new Date():予約日が「今日より前」か、r.status === "cancelled":予約が「キャンセル」されたか。
 
-  const fullName = profile?.full_name || session?.user.user_metadata?.full_name || session?.user.email?.split("@")[0] || "ユーザー"
-  const initials = fullName
-    .split(" ")
-    .map((n:string) => n[0])
-    .join("")
+
 //94:profile?.full_name→ユーザーのプロフィール情報（名前）があればそれ。||→または。nullやundefinedの場合次の値を使う。session?.user.email?.split("@")[0]→名前がない場合メールアドレスの「＠より前の部分」を使う。||(または)、"ユーザー"→それでも値がなければユーザーという文字列を使用する。
 //95:fullName.split("")→名前を空白（スペース）で分けて配列にする。例"太郎 山田"；["太郎","山田"].map((n)=>n[0])→各単語の最初の１文字を取り出す。例["太郎","山田"];["太","山"].join("")→バラバラになった文字をくっつけて文字列にする。例"太山"
 
@@ -123,14 +150,13 @@ export default function MyPage() {
 //badge variant="outline"~→小さなラベル（バッジ）で「予約済み」と表示。
 //直近の予約はありませんと部分：予約がないときの「何もありません」という表示。
 //cardFooterカードの下部。ボタンクリックで/calendarに移動（予約ページ）
-return(
     <div className="container py-10">
       <div className="flex flex-col gap-8">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">マイページ</h1>
           <p className="text-muted-foreground">予約状況や会員情報を確認・管理できます</p>
         </div>
-
+        {/* 会員情報カード */}
         <div className="grid gap-6 md:grid-cols-3">
           <Card className="rounded-xl shadow-md">
             <CardHeader>
@@ -156,6 +182,7 @@ return(
             </CardFooter>
           </Card>
 
+          {/* 直近の予約カード */}
           <Card className="md:col-span-2 rounded-xl shadow-md">
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
@@ -170,38 +197,39 @@ return(
               </Button>
             </CardHeader>
             <CardContent className="p-6">
-              {lessonData.length > 0 ? (
+              {upcomingReservations.length > 0 ? (
                 <div className="space-y-4">
-                  {lessonData.slice(0, 3).map((reservation) => (
-                    <div key={reservation.id} className="flex items-center justify-between rounded-xl border p-4">
+                  {upcomingReservations.slice(0, 3).map((r) => (
+                    <div key={r.id || r.schedule_id} className="flex items-center justify-between rounded-xl border p-4">
                       <div className="space-y-1">
-                        <h4 className="font-medium">{reservation.clubName}</h4>
+                        <h4 className="font-medium">{r.schedules.lesson_name || "レッスン未設定"}</h4>
                         <div className="flex items-center text-sm text-muted-foreground">
                           <CalendarDays className="mr-1 h-4 w-4" />
-                          {reservation.date} {reservation.startTime}-{reservation.endTime}
+                          {r.schedules.date} {r.schedules.start_time}-{r.schedules.end_time}
                         </div>
-                        <p className="text-sm text-muted-foreground">インストラクター: {reservation.instructor}</p>
+                        <p className="text-sm text-muted-foreground">インストラクター: {r.schedules.staff?.name || "未設定"}</p>
                       </div>
-                      <Badge variant="outline" className="bg-primary/10 text-primary-dark border-primary-light">
-                        予約済み
+                      <Badge variant={r.status === "cancelled" ? "destructive" : "secondary"}>
+                        {r.status === "cancelled" ? "キャンセル済み" : "予約済み"}
                       </Badge>
                     </div>
                   ))}
                 </div>
               ) : (
                 <div className="flex h-[100px] items-center justify-center rounded-xl border border-dashed">
-                  <p className="text-muted-foreground">直近の予約はありません</p>
+                  <p className="text-muted-foreground">予約履歴はありません</p>
                 </div>
               )}
             </CardContent>
             <CardFooter className="p-6">
               <Button className="w-full rounded-xl" asChild>
-                <Link href="/calendar">新しく予約する</Link>
+                 <Link href="/calendar">新しく予約する</Link>
               </Button>
             </CardFooter>
           </Card>
         </div>
-
+      </div>
+              {/* 予約履歴カード */}
         <Card className="rounded-xl shadow-md">
           <CardHeader>
             <CardTitle>予約履歴</CardTitle>
@@ -211,14 +239,14 @@ return(
             {pastReservations.length > 0 ? (
               <div className="space-y-4">
                 {pastReservations.slice(0, 5).map((reservation) => (
-                  <div key={reservation.id} className="flex items-center justify-between rounded-xl border p-4">
-                    <div className="space-y-1">
-                      <h4 className="font-medium">{reservation.clubName}</h4>
-                      <div className="flex items-center text-sm text-muted-foreground">
-                        <CalendarDays className="mr-1 h-4 w-4" />
-                        {reservation.date} {reservation.start_time}-{reservation.end_time}
+                  <div key={reservation.id || reservation.schedule_id} className="flex items-center justify-between rounded-xl border p-4">
+                     <div className="space-y-1">
+      <h4 className="font-medium">{reservation.schedules.lesson_name || "レッスン未設定"}</h4>
+                  <div className="flex items-center text-sm text-muted-foreground">
+                    <CalendarDays className="mr-1 h-4 w-4" />
+                    {reservation.schedules.date} {reservation.schedules.start_time} - {reservation.schedules.end_time}
                       </div>
-                      <p className="text-sm text-muted-foreground">インストラクター: {reservation.instructor}</p>
+                      <p className="text-sm text-muted-foreground">インストラクター: {reservation.schedules.staff?.name || "未設定"}</p>
                     </div>
                     <Badge variant={reservation.status === "cancelled" ? "destructive" : "secondary"}>
                       {reservation.status === "cancelled" ? "キャンセル済み" : "完了"}
@@ -239,7 +267,6 @@ return(
           </CardFooter>
         </Card>
       </div>
-    </div>
   )
 }
 //pastReservationsの件数が１件以上あるか。pastReservationsとは....???

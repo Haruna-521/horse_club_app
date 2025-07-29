@@ -83,9 +83,9 @@ export default function CalendarPage() {
         const { data: scheduleData, error: scheduleError } = await supabase
         .from("schedules")
         .select(`
-          id,lesson_name,start_time,end_time,available_slots,level,
+          *,
           staff:staff_id!left(
-            name)
+             name)
         `)
         .eq("club_id", selectedClub)
         .eq("date", formattedDate)
@@ -210,11 +210,16 @@ export default function CalendarPage() {
               <div className="grid gap-4">
                 {schedules.map((schedule) => (
                   <Card key={schedule.id} className="rounded-xl shadow-md">
-                    <CardHeader className="pb-2">
+                    <CardHeader className="pb-2 space-y-1">
+                    <CardTitle className="text-xl font-bold text-black">
+                      {schedule.lesson_name?.trim() || "レッスン名未設定"}
+                    </CardTitle>
+
+
                       <div className="flex items-center justify-between">
-                        <CardTitle className="text-lg">
+                        <p className="text-sm text-muted-foreground">
                           {schedule.start_time} - {schedule.end_time}
-                        </CardTitle>
+                        </p>
                         <Badge variant={schedule.available_slots > 0 ? "outline" : "destructive"}>
                           {schedule.available_slots > 0 ? `残り${schedule.available_slots}枠` : "満員"}
                         </Badge>
