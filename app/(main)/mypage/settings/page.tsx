@@ -64,7 +64,7 @@ export default function SettingsPage() {
         const { data, error } = await supabase
           .from('profiles')
           .select('*')
-          .eq('id', session.user.id)
+          .eq('user_id', session.user.id)
           .single()
         
         if (error) {
@@ -171,4 +171,24 @@ export default function SettingsPage() {
       })
     }
   }
+  return (
+  <div className="container mx-auto py-10">
+    <h1 className="text-2xl font-semibold mb-6">プロフィール設定</h1>
+    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <div>
+        <label className="block mb-1">氏名</label>
+        <input {...form.register("fullName")} className="input" />
+      </div>
+      {/* 他のフィールド（email, phone など）も同様に追加 */}
+      <button
+        type="submit"
+        className="btn btn-primary"
+        disabled={isLoading}
+      >
+        {isLoading ? "保存中..." : "保存する"}
+      </button>
+    </form>
+  </div>
+)
+
 }
