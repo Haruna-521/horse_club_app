@@ -52,16 +52,17 @@ export function RegisterForm() {
 
       // ユーザー登録
       const { data: authData, error: authError } = await supabase.auth.signUp({//これは分割代入ってやつ。supabaseの.signUp()はdata,errorの二つの値を返す。成功ならdataに情報が入って、失敗ならerrorにメッセージが入るのでそれをauthDataとauthErrorという名前にして使う。supabase.auth.signUpの処理を実行、awiatでその処理が終わるまで待つよといってる。
+
+        
         email: values.email,
         password: values.password,
         options: {
           data: {
-            full_name: values.fullName,
+            full_name: values.fullName,// auth.users.user_metadata に入る
           },
         },
       })//emailもpasswordも認証処理で基本情報。valuesは入力内容がまとめて入ったオブジェクト。values.emailと書くことでvaluesのemailを取り出してねってことになる。
       //supabaseに認証（auth)とユーザープロフィールは分かれている。authで登録できるのは基本的にemailとpasswordだけ。名前やプロフィール画像などを一緒に保存したいときはoptions.dataの中に書く必要がある。これはsupabase側で「ユーザーごとの情報（メタデータ）」として管理される。なおここら辺はsupabaseが自動で持っているauth.usersという専用のテーブルが非表示で存在している。signUp()を使うとこのテーブルに自動で追加される。
-
       if (authError) {
         toast({
           title: "登録に失敗しました",
@@ -70,6 +71,23 @@ export function RegisterForm() {
         })
         return
       }
+
+    // プロフィールをprofilesテーブルに登録
+      if (authData?.user) {
+        const user = authData.user
+        const { error: profileError } = await supabase.from("profiles").insert([
+          {
+            user_id: user.id, // 外部キーとするauth.users.id
+            full_name: values.fullName, // フォームから渡された名前
+            avatar_url: "", // 初期値として空文字など
+          },
+        ])//supabaseのfrom()は指定したテーブルを操作するためのメソッド。insert()はデータを追加するためのメソッド。profilesテーブルに新しいユーザーのプロフィール情報を追加している。user_idはauth.users.idと紐づけるための外部キーとして使う。full_nameはフォームから取得した値をそのまま入れる。avatar_urlは初期値として空文字にしている。
+
+        if (profileError) {
+          console.error("プロフィール作成エラー:", profileError)
+        }
+      }
+
 
       toast({
         title: "会員登録が完了しました",
